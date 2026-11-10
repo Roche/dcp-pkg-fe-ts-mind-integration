@@ -1,0 +1,42 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write # Required to mint the OIDC token
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build --if-present
+
+      # Step 2: Switch to Node 22+ to provide an npm version that supports Trusted Publishing OIDC
+      - name: Setup Node.js (Publish Environment)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        run: |
+          # Remove any static auth token line injected by setup-node into .npmrc
+          sed -i '/_authToken/d' /home/runner/work/_temp/.npmrc 2>/dev/null || true
+          npm publish --provenance --access public
