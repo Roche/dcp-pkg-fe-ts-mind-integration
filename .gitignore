@@ -3,3 +3,4 @@ dist
 .npmrc
 # TypeScript incremental build cache
 *.tsbuildinfo
+.idea
